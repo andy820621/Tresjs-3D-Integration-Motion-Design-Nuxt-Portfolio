@@ -13,16 +13,23 @@
     "lint:fix": "eslint . --fix"
   },
   "dependencies": {
+    "@nuxt/icon": "^1.4.8",
+    "@nuxt/image": "^1.7.0",
+    "@vueuse/motion": "^2.2.3",
+    "mini-svg-data-uri": "^1.4.4",
     "nuxt": "^3.12.4",
+    "tailwindcss-animate": "^1.0.7",
     "vue": "latest"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^2.26.0",
+    "@iconify-json/fa6-solid": "^1.1.24",
     "@nuxtjs/color-mode": "^3.4.4",
     "@nuxtjs/fontaine": "^0.4.3",
     "@nuxtjs/tailwindcss": "^6.12.1",
     "@pinia/nuxt": "^0.5.3",
     "@vueuse/nuxt": "^11.0.1",
-    "eslint": "9.5.0"
+    "eslint": "9.5.0",
+    "eslint-plugin-format": "^0.1.2"
   }
 }
