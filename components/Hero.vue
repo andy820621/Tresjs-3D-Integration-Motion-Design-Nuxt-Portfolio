@@ -26,9 +26,9 @@
           Hi, I'm BarZ Hsieh, a Frontend Developer based in Taiwan.
         </p>
 
-        <NuxtLink to="/about">
+        <a href="#about">
           <UiMagicBtn title="Show My Work" icon="i-fa6-solid-location-arrow" position="right" />
-        </NuxtLink>
+        </a>
       </div>
     </div>
   </div>

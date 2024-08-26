@@ -15,6 +15,7 @@ export default defineNuxtConfig({
     '@nuxt/image',
     '@vueuse/motion/nuxt',
     '@nuxt/icon',
+    '@tresjs/nuxt',
   ],
   icon: {
     serverBundle: {
@@ -22,12 +23,13 @@ export default defineNuxtConfig({
         'fa6-solid',
         // 'fa6-regular',
         // 'fa6-brands',
+        'ion',
       ],
     },
   },
   tailwindcss: {
-    cssPath: '~/assets/css/globals.css',
     config: {
+      content: ['./assets/data/index.ts'],
       theme: {
         container: {
           center: true,
@@ -168,8 +170,7 @@ export default defineNuxtConfig({
             'third': 'moveInCircle 40s linear infinite',
             'fourth': 'moveHorizontal 40s ease infinite',
             'fifth': 'moveInCircle 20s ease infinite',
-            'scroll':
-          'scroll var(--animation-duration, 40s) var(--animation-direction, forwards) linear infinite',
+            'scroll': 'scroll var(--animation-duration, 40s) var(--animation-direction, forwards) linear infinite',
           },
         },
       },

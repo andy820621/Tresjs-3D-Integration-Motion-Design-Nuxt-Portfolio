@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import '~/assets/css/globals.css'
+
 useHead({
   title: 'BarZ Hsieh',
   meta: [
