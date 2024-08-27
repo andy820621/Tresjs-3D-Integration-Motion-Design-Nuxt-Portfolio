@@ -1,16 +1,5 @@
 <script setup lang="ts">
-const navItems = ref([
-  {
-    name: 'Home',
-    link: '/',
-    icon: 'i-fa6-solid-house',
-  },
-  {
-    name: 'About',
-    link: '/about',
-    icon: 'i-fa6-solid-location-arrow',
-  },
-])
+import { navItems } from '~/assets/data'
 </script>
 
 <template>
@@ -20,5 +9,7 @@ const navItems = ref([
     <Hero />
 
     <BentoGrid />
+
+    <RecentProjects />
   </div>
 </template>
