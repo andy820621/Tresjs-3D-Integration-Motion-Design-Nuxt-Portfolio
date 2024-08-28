@@ -36,6 +36,7 @@
     "@tresjs/nuxt": "^3.0.3",
     "@vueuse/nuxt": "^11.0.1",
     "eslint": "9.5.0",
-    "eslint-plugin-format": "^0.1.2"
+    "eslint-plugin-format": "^0.1.2",
+    "nuxt-rollbar": "^0.2.2"
   }
 }
