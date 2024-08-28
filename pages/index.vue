@@ -11,5 +11,7 @@ import { navItems } from '~/assets/data'
     <BentoGrid />
 
     <RecentProjects />
+
+    <Clients />
   </div>
 </template>
