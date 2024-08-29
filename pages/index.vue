@@ -13,5 +13,7 @@ import { navItems } from '~/assets/data'
     <RecentProjects />
 
     <Clients />
+
+    <Experience />
   </div>
 </template>
