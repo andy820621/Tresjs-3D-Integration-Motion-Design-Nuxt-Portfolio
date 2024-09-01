@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Color, Fog, Vector3 } from 'three'
 import ThreeGlobe from 'three-globe'
-import { TresCanvas, extend } from '@tresjs/core'
+import { extend } from '@tresjs/core'
 import { OrbitControls } from '@tresjs/cientos'
 
 import type { WorldProps } from './types'
@@ -17,8 +17,6 @@ const RING_PROPAGATION_SPEED = 3
 const pixelRatio = shallowRef(window.devicePixelRatio)
 
 const globeRef = ref<ThreeGlobe | null>(null)
-const canvasRef = ref<InstanceType<typeof TresCanvas> | null>(null)
-const cameraRef = ref(null)
 const globeData = shallowRef<{
   size: number
   order: number
@@ -51,38 +49,13 @@ watch(globeRef, () => {
   if (globeRef.value) {
     buildData()
     buildMaterial()
-
-    // console.log({ globeRef: globeRef.value })
   }
 })
-
-watch(canvasRef, () => {
-  if (canvasRef.value) {
-    if (canvasRef.value.context) {
-      if (canvasRef.value.context.scene.value) {
-        // TODO: Seems to have no effect, need to refactor
-        // const fog = new Fog(0xFFFFFF, 200, 1000) // 調整近平面和遠平面
-
-        // 使用亮黃色，稍微降低亮度以模擬透明度
-        const fogColor = new Color('#FFFF00').multiplyScalar(0.5)
-        const fog = new Fog(fogColor, 400, 2000)
-
-        canvasRef.value.context.scene.value.fog = fog
-      }
-      // console.log({ scene: canvasRef.value?.context?.scene.value })
-    }
-  }
-})
-// watch(cameraRef, () => {
-//   if (cameraRef.value) {
-//     console.log({ cameraRef: cameraRef.value })
-//   }
-// })
 
 watch(globeData, async () => {
   if (globeRef.value && globeData.value) {
     globeRef.value
-      .hexPolygonsData(countries.features)
+      // .hexPolygonsData(countries.features) // TODO: 設定地圖資料會發生錯誤："Uncaught (in promise) TypeError: Cannot read properties of undefined (reading 'count')"
       .hexPolygonResolution(3)
       .hexPolygonMargin(0.7)
       .showAtmosphere(defaultProps.showAtmosphere)
@@ -114,13 +87,8 @@ onMounted(resume)
 onUnmounted(pause)
 
 function buildMaterial() {
-  if (!globeRef.value) {
-    console.error('Globe reference is not available')
-    return
-  }
-
   try {
-    const globeMaterial = globeRef.value.globeMaterial()
+    const globeMaterial = globeRef.value!.globeMaterial()
 
     if ('color' in globeMaterial) // 檢查並設置顏色
       globeMaterial.color = new Color(props.globeConfig.globeColor)
@@ -201,13 +169,8 @@ function hexToRgb(hex: string) {
 }
 
 function startAnimation() {
-  if (!globeRef.value || !globeData.value || !props.arcsData) {
-    console.error('Globe, data, or arcsData is not available')
-    return
-  }
-
   try {
-    globeRef.value
+    globeRef.value!
       .arcsData(props.arcsData)
       .arcStartLat(d => (d as { startLat: number }).startLat * 1)
       .arcStartLng(d => (d as { startLng: number }).startLng * 1)
@@ -225,14 +188,14 @@ function startAnimation() {
       .arcDashGap(15)
       .arcDashAnimateTime(() => defaultProps.arcTime)
 
-    globeRef.value
+    globeRef.value!
       .pointsData(props.arcsData)
       .pointColor(e => (e as { color: string }).color)
       // .pointsMerge(true) // TODO: figure out why this line will occur Error
       .pointAltitude(0.0)
       .pointRadius(2)
 
-    globeRef.value
+    globeRef.value!
       .ringsData([])
       .ringColor((e: any) => (t: any) => e.color(t))
       .ringMaxRadius(defaultProps.maxRings)
@@ -262,14 +225,12 @@ function genRandomNumbers(min: number, max: number, count: number) {
   <!-- :clear-color="new Color('#0xFFAAFF').getHexString()" -->
   <!-- clear-color="#82DBC5" -->
   <TresCanvas
-    ref="canvasRef"
     :pixel-ratio="pixelRatio"
     alpha
   >
+    <TresFog :args="[0xFFFFFF, 400, 2000]" />
     <!-- Set up the camera -->
     <TresPerspectiveCamera
-      v-if="globeRef"
-      ref="cameraRef"
       :fov="50"
       :aspect="1.2"
       :near="180"
@@ -279,18 +240,20 @@ function genRandomNumbers(min: number, max: number, count: number) {
     />
 
     <!-- Add the globe -->
+    <!-- <TresMesh :position="[0, 0, 0]"> -->
+    <!-- <TresConeGeometry :args="[1, 1.5, 3]" /> -->
     <TresThreeGlobe ref="globeRef" />
+    <!-- </TresMesh> -->
 
     <!-- Lighting -->
-    <TresAmbientLight v-if="globeRef && globeConfig" :color="globeConfig.ambientLight" :intensity="0.6" />
+    <TresAmbientLight :color="globeConfig.ambientLight" :intensity="0.6" />
     <!-- Left and top lights -->
-    <TresDirectionalLight v-if="globeRef && globeConfig" :color="globeConfig.directionalLeftLight" :position="new Vector3(-400, 100, 400)" />
-    <TresDirectionalLight v-if="globeRef && globeConfig" :color="globeConfig.directionalTopLight" :position="new Vector3(-200, 500, 200)" />
-    <TresPointLight v-if="globeRef && globeConfig" :color="globeConfig.pointLight" :position="new Vector3(-200, 500, 200)" intensity="0.8" />
+    <TresDirectionalLight :color="globeConfig.directionalLeftLight" :position="new Vector3(-400, 100, 400)" />
+    <TresDirectionalLight :color="globeConfig.directionalTopLight" :position="new Vector3(-200, 500, 200)" />
+    <TresPointLight :color="globeConfig.pointLight" :position="new Vector3(-200, 500, 200)" intensity="0.8" />
 
     <!-- Controls -->
     <OrbitControls
-      v-if="globeRef"
       :enable-pan="false"
       :enable-zoom="false"
       :min-distance="300"
