@@ -4,7 +4,7 @@ import { navItems } from '~/assets/data'
 
 <template>
   <div class="max-w-7xl w-full">
-    <UiFloatingNav :nav-items="navItems" />
+    <UiFloatingNavbar :nav-items="navItems" />
 
     <Hero />
 
@@ -15,5 +15,7 @@ import { navItems } from '~/assets/data'
     <Clients />
 
     <Experience />
+
+    <Approach />
   </div>
 </template>
