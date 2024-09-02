@@ -1,9 +1,7 @@
 <script setup lang="ts">
-import { Color, Fog, Vector3 } from 'three'
+import { Color, Fog, Material, Vector3 } from 'three'
+import { extend, useRenderLoop, useTresContext } from '@tresjs/core'
 import ThreeGlobe from 'three-globe'
-import { extend } from '@tresjs/core'
-import { OrbitControls } from '@tresjs/cientos'
-
 import type { WorldProps } from './types'
 import countries from '~/assets/data/globe.json'
 
@@ -11,19 +9,7 @@ const props = withDefaults(defineProps<WorldProps>(), {
 
 })
 
-extend({ ThreeGlobe })
-
 const RING_PROPAGATION_SPEED = 3
-const pixelRatio = shallowRef(window.devicePixelRatio)
-
-const globeRef = ref<ThreeGlobe | null>(null)
-const globeData = shallowRef<{
-  size: number
-  order: number
-  color: (t: number) => string
-  lat: number
-  lng: number
-}[]>([])
 
 const defaultProps = ({
   pointSize: 1,
@@ -45,27 +31,78 @@ onBeforeMount(() => {
     Object.assign(defaultProps, props.globeConfig)
 })
 
+const globeGroup = ref()
+const globeRef = ref<ThreeGlobe | null>(null)
+const globeData = shallowRef<{
+  size: number
+  order: number
+  color: (t: number) => string
+  lat: number
+  lng: number
+}[]>([])
+
+onMounted(() => {
+  const globe = new ThreeGlobe()
+  globeRef.value = globe
+  if (!globeGroup.value)
+    return
+  globeGroup.value.add(globe)
+
+  // 設定地球儀的材質
+  const globeMaterial = globe.globeMaterial()
+  if ('color' in globeMaterial) // 檢查並設置顏色
+    globeMaterial.color = new Color(props.globeConfig.globeColor)
+  if ('emissive' in globeMaterial) // 檢查並設置發光顏色
+    globeMaterial.emissive = new Color(props.globeConfig.emissive)
+  if ('emissiveIntensity' in globeMaterial) // 檢查並設置發光強度
+    globeMaterial.emissiveIntensity = props.globeConfig.emissiveIntensity || 0.1
+  if ('shininess' in globeMaterial) // 檢查並設置光澤度
+    globeMaterial.shininess = props.globeConfig.shininess || 0.9
+
+  globeMaterial.setValues({
+    blendColor: new Color(props.globeConfig.globeColor),
+  })
+
+  // 設定地球儀的大小
+  globe.scale.set(5, 5, 5)
+
+  // 添加點或弧線等
+  buildData()
+  buildMaterial()
+})
+
 watch(globeRef, () => {
   if (globeRef.value) {
     buildData()
     buildMaterial()
+    // globeRef.value.lookAt(new Vector3(0, 0, 0))
   }
 })
 
 watch(globeData, async () => {
   if (globeRef.value && globeData.value) {
-    globeRef.value
-      // .hexPolygonsData(countries.features) // TODO: 設定地圖資料會發生錯誤："Uncaught (in promise) TypeError: Cannot read properties of undefined (reading 'count')"
-      .hexPolygonResolution(3)
-      .hexPolygonMargin(0.7)
-      .showAtmosphere(defaultProps.showAtmosphere)
-      .atmosphereColor(defaultProps.atmosphereColor)
-      .atmosphereAltitude(defaultProps.atmosphereAltitude)
-      .hexPolygonColor(() => {
-        return defaultProps.polygonColor
-      })
+    const features = countries?.features || [];
+    if (features.length === 0) {
+      console.error('No features found in countries data');
+      return;
+    }
 
-    startAnimation()
+    try {
+      globeRef.value
+        .hexPolygonsData(features) // 確保 features 不為空
+        .hexPolygonResolution(3)
+        .hexPolygonMargin(0.7)
+        .showAtmosphere(defaultProps.showAtmosphere)
+        .atmosphereColor(defaultProps.atmosphereColor)
+        .atmosphereAltitude(defaultProps.atmosphereAltitude)
+        .hexPolygonColor(() => {
+          return defaultProps.polygonColor;
+        });
+
+      startAnimation();
+    } catch (error) {
+      console.error('Error setting hexPolygonsData:', error);
+    }
   }
 })
 
@@ -222,46 +259,14 @@ function genRandomNumbers(min: number, max: number, count: number) {
 </script>
 
 <template>
-  <!-- :clear-color="new Color('#0xFFAAFF').getHexString()" -->
-  <!-- clear-color="#82DBC5" -->
-  <TresCanvas
-    :pixel-ratio="pixelRatio"
-    alpha
-  >
-    <TresFog :args="[0xFFFFFF, 400, 2000]" />
-    <!-- Set up the camera -->
-    <TresPerspectiveCamera
-      :fov="50"
-      :aspect="1.2"
-      :near="180"
-      :far="1800"
-      :position="[0, 0, 300]"
-      :look-at="[0, 0, 0]"
-    />
-
-    <!-- Add the globe -->
-    <!-- <TresMesh> -->
-    <!-- <TresSphereGeometry /> -->
-    <TresThreeGlobe ref="globeRef" />
-    <!-- </TresMesh> -->
-
-    <!-- Lighting -->
-    <TresAmbientLight :color="globeConfig.ambientLight" :intensity="0.6" />
-    <!-- Left and top lights -->
-    <TresDirectionalLight :color="globeConfig.directionalLeftLight" :position="new Vector3(-400, 100, 400)" />
-    <TresDirectionalLight :color="globeConfig.directionalTopLight" :position="new Vector3(-200, 500, 200)" />
-    <TresPointLight :color="globeConfig.pointLight" :position="new Vector3(-200, 500, 200)" intensity="0.8" />
-
-    <!-- Controls -->
-    <OrbitControls
-      :enable-pan="false"
-      :enable-zoom="false"
-      :min-distance="300"
-      :max-distance="300"
-      :auto-rotate="true"
-      :auto-rotate-speed="1"
-      :min-polar-angle="Math.PI / 3.5"
-      :max-polar-angle="Math.PI - Math.PI / 3"
-    />
-  </TresCanvas>
+  <TresGroup ref="globeGroup">
+    <TresMesh>
+      <TresSphereGeometry :args="[5, 32, 32]" />
+      <TresMeshStandardMaterial color="#0000ff" />
+    </TresMesh>
+  </TresGroup>
 </template>
+
+<style scoped>
+
+</style>

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import ShaderMaterial from './ShaderMaterial.vue'
-import type { TresCanvas } from '#build/components'
 
 defineProps<{
   source: string
