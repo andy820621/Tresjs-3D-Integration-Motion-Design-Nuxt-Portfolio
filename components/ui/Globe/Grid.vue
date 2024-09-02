@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { GlobeConfig, Position } from './types'
+import ThreeGlobe from './ThreeGlobe.vue'
 
 const globeConfig: GlobeConfig = {
   pointSize: 4,
@@ -396,7 +397,8 @@ const sampleArcs: Position[] = [
 
       <div class="absolute w-full h-72 md:h-full z-10">
         <ClientOnly>
-          <UiGlobe :arcs-data="sampleArcs" :globe-config="globeConfig" />
+          <!-- <UiGlobe :arcs-data="sampleArcs" :globe-config="globeConfig" /> -->
+          <ThreeGlobe :arcs-data="sampleArcs" :globe-config="globeConfig" />
         </ClientOnly>
       </div>
     </div>

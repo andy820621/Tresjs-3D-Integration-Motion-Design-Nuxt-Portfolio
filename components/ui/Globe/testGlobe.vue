@@ -1,11 +1,14 @@
 <script setup lang="ts">
+import { Color, Fog, Material, Vector3 } from 'three'
+import { extend, useRenderLoop, useTresContext } from '@tresjs/core'
 import ThreeGlobe from 'three-globe'
-import { AmbientLight, Color, DirectionalLight, Fog, PerspectiveCamera, PointLight, Scene, WebGLRenderer } from 'three'
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import type { WorldProps } from './types'
 import countries from '~/assets/data/globe.json'
 
-const props = defineProps<WorldProps>()
+const props = withDefaults(defineProps<WorldProps>(), {
+
+})
+
 const RING_PROPAGATION_SPEED = 3
 
 const defaultProps = ({
@@ -23,16 +26,13 @@ const defaultProps = ({
   rings: 1,
   maxRings: 3,
 })
-if (props.globeConfig)
-  Object.assign(defaultProps, props.globeConfig)
+onBeforeMount(() => {
+  if (props.globeConfig)
+    Object.assign(defaultProps, props.globeConfig)
+})
 
-const container = ref<HTMLDivElement | null>(null)
-let renderer: WebGLRenderer
-let camera: PerspectiveCamera
-let scene: Scene
-let controls: OrbitControls
-let Globe: ThreeGlobe
-
+const globeGroup = ref()
+const globeRef = ref<ThreeGlobe | null>(null)
 const globeData = shallowRef<{
   size: number
   order: number
@@ -41,64 +41,17 @@ const globeData = shallowRef<{
   lng: number
 }[]>([])
 
-function init() {
-  renderer = new WebGLRenderer()
-  renderer.setPixelRatio(window.devicePixelRatio)
-  renderer.setClearColor(0xFFAAFF, 0)
-  container.value?.appendChild(renderer.domElement)
+onMounted(() => {
+  const globe = new ThreeGlobe()
+  globeRef.value = globe
+  if (!globeGroup.value)
+    return
+  globeGroup.value.add(globe)
 
-  scene = new Scene()
-  scene.add(new AmbientLight(props.globeConfig.ambientLight, 0.6))
-
-  const aspect = 1.2
-  camera = new PerspectiveCamera(50, aspect, 180, 1800)
-  camera.updateProjectionMatrix()
-
-  const dLight = new DirectionalLight(props.globeConfig.directionalLeftLight, 0.8)
-  dLight.position.set(-400, 100, 400)
-  camera.add(dLight)
-
-  const dLight1 = new DirectionalLight(props.globeConfig.directionalTopLight)
-  dLight1.position.set(-200, 500, 200)
-  camera.add(dLight1)
-
-  const pointLight = new PointLight(props.globeConfig.pointLight, 0.8)
-  pointLight.position.set(-200, 500, 200)
-  camera.add(pointLight)
-
-  scene.add(camera)
-  scene.fog = new Fog(0xFFFFFF, 400, 2000)
-
-  const cameraZ = 300
-  controls = new OrbitControls(camera, renderer.domElement)
-  controls.enablePan = false
-  controls.enableZoom = false
-  controls.minDistance = cameraZ
-  controls.maxDistance = cameraZ
-  controls.autoRotateSpeed = 1
-  controls.autoRotate = true
-  controls.minPolarAngle = Math.PI / 3.5
-  controls.maxPolarAngle = Math.PI - Math.PI / 3
-}
-
-function initGlobe() {
-  Globe = new ThreeGlobe({
-    waitForGlobeReady: true,
-    animateIn: true,
-  })
-    .hexPolygonsData(countries.features)
-    .hexPolygonResolution(3)
-    .hexPolygonMargin(0.7)
-    .showAtmosphere(defaultProps.showAtmosphere)
-    .atmosphereColor(defaultProps.atmosphereColor)
-    .atmosphereAltitude(defaultProps.atmosphereAltitude)
-    .hexPolygonColor(() => {
-      return defaultProps.polygonColor
-    })
-
-  const globeMaterial = Globe.globeMaterial()
+  // 設定地球儀的材質
+  const globeMaterial = globe.globeMaterial()
   if ('color' in globeMaterial) // 檢查並設置顏色
-    globeMaterial.color = new Color(props.globeConfig.globeColor || defaultProps.globeColor || '#1d072e')
+    globeMaterial.color = new Color(props.globeConfig.globeColor)
   if ('emissive' in globeMaterial) // 檢查並設置發光顏色
     globeMaterial.emissive = new Color(props.globeConfig.emissive)
   if ('emissiveIntensity' in globeMaterial) // 檢查並設置發光強度
@@ -106,74 +59,56 @@ function initGlobe() {
   if ('shininess' in globeMaterial) // 檢查並設置光澤度
     globeMaterial.shininess = props.globeConfig.shininess || 0.9
 
-  scene.add(Globe)
-}
+  globeMaterial.setValues({
+    blendColor: new Color(props.globeConfig.globeColor),
+  })
 
-let animationFrameId: number
+  // 設定地球儀的大小
+  globe.scale.set(5, 5, 5)
 
-function animate() {
-  if (!camera)
-    return
-  camera.lookAt(scene.position) // 相機對準場景中心
-  controls.update() // 更新控制器
-  renderer.render(scene, camera) // 渲染場景
-  animationFrameId = requestAnimationFrame(animate) // 設置下一幀的動畫
-}
-
-function initRender() {
-  init()
-  initGlobe()
+  // 添加點或弧線等
   buildData()
-  animate()
+  buildMaterial()
+})
 
-  if (Globe && globeData.value) {
-    const features = countries?.features || []
+watch(globeRef, () => {
+  if (globeRef.value) {
+    buildData()
+    buildMaterial()
+    // globeRef.value.lookAt(new Vector3(0, 0, 0))
+  }
+})
+
+watch(globeData, async () => {
+  if (globeRef.value && globeData.value) {
+    const features = countries?.features || [];
     if (features.length === 0) {
-      console.error('No features found in countries data')
-      return
+      console.error('No features found in countries data');
+      return;
     }
 
     try {
-      Globe
-        .hexPolygonsData(features)
+      globeRef.value
+        .hexPolygonsData(features) // 確保 features 不為空
         .hexPolygonResolution(3)
         .hexPolygonMargin(0.7)
         .showAtmosphere(defaultProps.showAtmosphere)
         .atmosphereColor(defaultProps.atmosphereColor)
         .atmosphereAltitude(defaultProps.atmosphereAltitude)
         .hexPolygonColor(() => {
-          return defaultProps.polygonColor
-        })
+          return defaultProps.polygonColor;
+        });
 
-      startAnimation()
-    }
-    catch (error) {
-      console.error('Error setting hexPolygonsData:', error)
+      startAnimation();
+    } catch (error) {
+      console.error('Error setting hexPolygonsData:', error);
     }
   }
-}
-function destroyCanvas() {
-  cancelAnimationFrame(animationFrameId)
-  scene.traverse((child: any) => {
-    if (child.material) {
-      child.material.dispose()
-    }
-    if (child.geometry) {
-      child.geometry.dispose()
-    }
-  })
-  scene.clear()
-  renderer.forceContextLoss() // 強制上下文丟失
-  renderer.dispose() // 釋放渲染器資源
-  container.value?.removeChild(renderer.domElement)
-}
-
-onMounted(initRender)
-onBeforeUnmount(destroyCanvas)
+})
 
 // 控制圓環動畫
 const { pause, resume } = useIntervalFn(() => {
-  if (!Globe || !globeData.value)
+  if (!globeRef.value || !globeData.value)
     return
   const numbersOfRings = genRandomNumbers(
     0,
@@ -181,12 +116,37 @@ const { pause, resume } = useIntervalFn(() => {
     Math.floor((props.arcsData.length * 4) / 5),
   )
 
-  Globe.ringsData(
+  globeRef.value.ringsData(
     globeData.value.filter((d, i) => numbersOfRings.includes(i)),
   )
 }, 2000)
 onMounted(resume)
 onUnmounted(pause)
+
+function buildMaterial() {
+  try {
+    const globeMaterial = globeRef.value!.globeMaterial()
+
+    if ('color' in globeMaterial) // 檢查並設置顏色
+      globeMaterial.color = new Color(props.globeConfig.globeColor)
+    if ('emissive' in globeMaterial) // 檢查並設置發光顏色
+      globeMaterial.emissive = new Color(props.globeConfig.emissive)
+    if ('emissiveIntensity' in globeMaterial) // 檢查並設置發光強度
+      globeMaterial.emissiveIntensity = props.globeConfig.emissiveIntensity || 0.1
+    if ('shininess' in globeMaterial) // 檢查並設置光澤度
+      globeMaterial.shininess = props.globeConfig.shininess || 0.9
+
+    globeMaterial.setValues({
+      blendColor: new Color(props.globeConfig.globeColor),
+    })
+
+    // 確保材質更新
+    globeMaterial.needsUpdate = true
+  }
+  catch (error) {
+    console.error('Error building globe material:', error)
+  }
+}
 
 function buildData() {
   try {
@@ -229,7 +189,6 @@ function buildData() {
     console.error('Error building globe data:', error)
   }
 }
-
 function hexToRgb(hex: string) {
   const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i
   hex = hex.replace(shorthandRegex, (m, r, g, b) => {
@@ -245,20 +204,10 @@ function hexToRgb(hex: string) {
       }
     : null
 }
-function genRandomNumbers(min: number, max: number, count: number) {
-  const arr: number[] = []
-  while (arr.length < count) {
-    const r = Math.floor(Math.random() * (max - min)) + min
-    if (!arr.includes(r))
-      arr.push(r)
-  }
-
-  return arr
-}
 
 function startAnimation() {
   try {
-    Globe!
+    globeRef.value!
       .arcsData(props.arcsData)
       .arcStartLat(d => (d as { startLat: number }).startLat * 1)
       .arcStartLng(d => (d as { startLng: number }).startLng * 1)
@@ -276,14 +225,14 @@ function startAnimation() {
       .arcDashGap(15)
       .arcDashAnimateTime(() => defaultProps.arcTime)
 
-    Globe!
+    globeRef.value!
       .pointsData(props.arcsData)
       .pointColor(e => (e as { color: string }).color)
       // .pointsMerge(true) // TODO: figure out why this line will occur Error
       .pointAltitude(0.0)
       .pointRadius(2)
 
-    Globe!
+    globeRef.value!
       .ringsData([])
       .ringColor((e: any) => (t: any) => e.color(t))
       .ringMaxRadius(defaultProps.maxRings)
@@ -297,24 +246,27 @@ function startAnimation() {
   }
 };
 
-useResizeObserver(container, ([entry]) => {
-  const { width, height } = entry.contentRect
-  if (camera && renderer) {
-    camera.aspect = width / height
-    camera.updateProjectionMatrix()
-    renderer.setSize(width, height)
+function genRandomNumbers(min: number, max: number, count: number) {
+  const arr: number[] = []
+  while (arr.length < count) {
+    const r = Math.floor(Math.random() * (max - min)) + min
+    if (!arr.includes(r))
+      arr.push(r)
   }
-})
+
+  return arr
+}
 </script>
 
 <template>
-  <div ref="container" />
+  <TresGroup ref="globeGroup">
+    <TresMesh>
+      <TresSphereGeometry :args="[5, 32, 32]" />
+      <TresMeshStandardMaterial color="#0000ff" />
+    </TresMesh>
+  </TresGroup>
 </template>
 
 <style scoped>
-/* 設置容器的尺寸 */
-div {
-  width: 100%;
-  height: 100%;
-}
+
 </style>
