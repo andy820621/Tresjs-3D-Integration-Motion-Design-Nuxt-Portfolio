@@ -305,16 +305,23 @@ useResizeObserver(container, ([entry]) => {
     renderer.setSize(width, height)
   }
 })
+
+useEventListener(container, 'mousedown', onMouseDown)
+useEventListener(container, 'mouseup', onMouseUp)
+
+function onMouseDown() {
+  if (container.value) {
+    container.value.style.cursor = 'grabbing'
+  }
+}
+
+function onMouseUp() {
+  if (container.value) {
+    container.value.style.cursor = 'grab'
+  }
+}
 </script>
 
 <template>
-  <div ref="container" />
+  <div ref="container" class="w-full h-full" />
 </template>
-
-<style scoped>
-/* 設置容器的尺寸 */
-div {
-  width: 100%;
-  height: 100%;
-}
-</style>
