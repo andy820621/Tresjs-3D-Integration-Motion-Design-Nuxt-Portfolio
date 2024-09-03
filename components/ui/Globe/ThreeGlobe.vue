@@ -323,5 +323,5 @@ function onMouseUp() {
 </script>
 
 <template>
-  <div ref="container" class="w-full h-full" />
+  <div ref="container" class="w-full h-full cursor-grab" />
 </template>
