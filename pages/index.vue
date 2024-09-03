@@ -17,5 +17,7 @@ import { navItems } from '~/assets/data'
     <Experience />
 
     <Approach />
+
+    <Footer />
   </div>
 </template>
