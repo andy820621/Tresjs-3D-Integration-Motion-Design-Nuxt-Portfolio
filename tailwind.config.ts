@@ -3,7 +3,19 @@ import flattenColorPalette from 'tailwindcss/lib/util/flattenColorPalette'
 import tailwindAnimate from 'tailwindcss-animate'
 
 export default {
-  content: ['./assets/data/index.ts'],
+  modules: ['@nuxtjs/color-mode'],
+  colorMode: {
+    classSuffix: '',
+  },
+  content: [
+    './assets/data/index.ts',
+    './components/**/*.{js,vue,ts}',
+    './layouts/**/*.vue',
+    './pages/**/*.vue',
+    './plugins/**/*.{js,ts}',
+    './app.vue',
+    './error.vue',
+  ],
   theme: {
     container: {
       center: true,

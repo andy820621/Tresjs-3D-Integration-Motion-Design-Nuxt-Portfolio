@@ -10,7 +10,7 @@ export default defineNuxtConfig({
     clientAccessToken: 'f9696ee296544c1aa7466e5bb0a02684',
   },
   plugins: ['~/plugins/RollbarUser.ts'],
-
+  css: ['~/assets/css/main.css'],
   icon: {
     serverBundle: {
       collections: [
@@ -25,5 +25,11 @@ export default defineNuxtConfig({
     configPath: '~/tailwind.config.ts',
     exposeConfig: true,
     viewer: true,
+  },
+  postcss: {
+    plugins: {
+      tailwindcss: {},
+      autoprefixer: {},
+    },
   },
 })

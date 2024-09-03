@@ -35,7 +35,8 @@
     --radius: 0.5rem;
   }
 
-  .dark {
+  .dark-mode,
+  :root {
     --background: 240 10% 3.9%;
     --foreground: 0 0% 98%;
 
@@ -75,6 +76,19 @@
   }
   button {
     @apply active:outline-none;
+  }
+
+  ::-webkit-scrollbar {
+    width: 0.7rem;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-background;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-slate-400 rounded-full border-2 border-solid border-background;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-primary;
   }
 }
 
