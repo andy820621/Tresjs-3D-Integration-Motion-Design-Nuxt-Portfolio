@@ -1,7 +1,7 @@
 import type Rollbar from 'rollbar'
 
 export default defineNuxtPlugin((nuxtApp) => {
-  const rollbar = useRollbar()
+  const rollbar = nuxtApp.$rollbar as Rollbar
 
   const userIdCookie = useCookie('userId', {
     // maxAge: 86400, // 設置為 1 天 (86400 秒)
@@ -15,10 +15,10 @@ export default defineNuxtPlugin((nuxtApp) => {
     userIdCookie.value = userId
   }
 
-  if (import.meta.client && nuxtApp.$rollbar) {
+  if (import.meta.client && rollbar) {
     rollbar.log('User visited!')
 
-    ;(nuxtApp.$rollbar as Rollbar).configure({
+    rollbar.configure({
       payload: {
         person: {
           id: userId,

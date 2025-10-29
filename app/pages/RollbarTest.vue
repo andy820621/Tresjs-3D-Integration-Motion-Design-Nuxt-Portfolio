@@ -1,9 +1,9 @@
 <!-- RollbarTest.vue -->
 <script setup lang="ts">
-const rollbar = useRollbar()
+const { $rollbar } = useNuxtApp()
 
 function triggerError() {
-  rollbar.log('Testing Rollbar integration')
+  $rollbar.log('Testing Rollbar integration')
   throw new Error('Testing Rollbar integration')
 }
 </script>
