@@ -1,8 +1,7 @@
 [build]
-  command = "pnpm run build"
-  publish = ".output/public"
+command = "pnpm run build"
+publish = "dist"
 
 [build.environment]
-  NODE_VERSION = "22.21.0"
-  PNPM_VERSION = "10.20.0"
-  NODE_OPTIONS = "--max-old-space-size=4096"
+NODE_VERSION = "22.21.0"
+NPM_CONFIG_BUILD_FROM_SOURCE = "true"
